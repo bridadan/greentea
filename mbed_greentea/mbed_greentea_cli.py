@@ -425,7 +425,7 @@ def run_test_thread(test_result_queue, test_queue, opts, mut, build, build_path,
 
         test_result = 'SKIPPED'
 
-        copy_method = opts.copy_method if opts.copy_method else 'shell'
+        copy_method = opts.copy_method if opts.copy_method else 'pyocd'
         verbose = opts.verbose_test_result_only
         enum_host_tests_path = get_local_host_tests_dir(opts.enum_host_tests)
 
@@ -437,6 +437,7 @@ def run_test_thread(test_result_queue, test_queue, opts, mut, build, build_path,
                                          mut['target_id'],
                                          micro=micro,
                                          copy_method=copy_method,
+                                         reset='pyocd',
                                          program_cycle_s=program_cycle_s,
                                          forced_reset_timeout=forced_reset_timeout,
                                          digest_source=opts.digest_source,
