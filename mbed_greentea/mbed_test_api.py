@@ -76,6 +76,15 @@ TEST_RESULT_MAPPING = {"success" : TEST_RESULT_OK,
                        "build_failed" : TEST_RESULT_BUILD_FAILED
                        }
 
+RETRY_ON_TEST_RESULT = [TEST_RESULT_ERROR,
+                        TEST_RESULT_UNDEF,
+                        TEST_RESULT_IOERR_COPY,
+                        TEST_RESULT_IOERR_DISK,
+                        TEST_RESULT_IOERR_SERIAL,
+                        TEST_RESULT_TIMEOUT,
+                        TEST_RESULT_NO_IMAGE,
+                        TEST_RESULT_MBED_ASSERT
+                        ]
 
 # This value is used to tell caller than run_host_test function failed while invoking mbedhtrun
 # Just a value greater than zero
@@ -117,7 +126,8 @@ def run_host_test(image_path,
                   max_failed_properties=5,
                   enum_host_tests_path=None,
                   global_resource_mgr=None,
-                  run_app=None):
+                  run_app=None,
+                  tries=1):
     """! This function runs host test supervisor (executes mbedhtrun) and checks output from host test process.
     @param image_path Path to binary file for flashing
     @param disk Currently mounted mbed-enabled devices disk (mount point)
@@ -136,6 +146,7 @@ def run_host_test(image_path,
     @param digest_source if None mbedhtrun will be executed. If 'stdin',
            stdin will be used via StdInObserver or file (if
            file name was given as switch option)
+    @param tries Number of times to run the host test if an error present in RETRY_ON_TEST_RESULT occurs
     @return Tuple with test results, test output, test duration times and test case results.
             Return int > 0 if running mbedhtrun process failed.
             Retrun int < 0 if something went wrong during mbedhtrun execution.
@@ -265,37 +276,49 @@ def run_host_test(image_path,
             cmd += ["-e", '"%s"'% enum_host_tests_path]
 
     gt_logger.gt_log_tab("calling mbedhtrun: %s"% " ".join(cmd), print_text=verbose)
-    gt_logger.gt_log("mbed-host-test-runner: started")
 
-    htrun_output = str()
-    start_time = time()
+    # Prepare variables for use in and out of the try loop
+    htrun_output = None
+    start_time = None
+    end_time = None
+    result = TEST_RESULT_UNDEF
 
-    # run_command will return None if process can't be opened (Issue #134)
-    p = run_command(cmd)
-    if not p:
-        # int value > 0 notifies caller that starting of host test process failed
-        return RUN_HOST_TEST_POPEN_ERROR
+    for try_number in range(tries):
+        gt_logger.gt_log("mbed-host-test-runner: started (try %d of %d)"% (try_number + 1, tries))
 
-    for line in iter(p.stdout.readline, b''):
-        htrun_output += line
-        # When dumping output to file both \r and \n will be a new line
-        # To avoid this "extra new-line" we only use \n at the end
-        if verbose:
-            sys.stdout.write(line.rstrip() + '\n')
-            sys.stdout.flush()
+        htrun_output = str()
+        start_time = time()
 
-    # Check if process was terminated by signal
-    returncode = p.wait()
-    if returncode < 0:
-        return returncode
+        # run_command will return None if process can't be opened (Issue #134)
+        p = run_command(cmd)
+        if not p:
+            # int value > 0 notifies caller that starting of host test process failed
+            return RUN_HOST_TEST_POPEN_ERROR
 
-    end_time = time()
-    testcase_duration = end_time - start_time   # Test case duration from reset to {end}
+        for line in iter(p.stdout.readline, b''):
+            htrun_output += line
+            # When dumping output to file both \r and \n will be a new line
+            # To avoid this "extra new-line" we only use \n at the end
+            if verbose:
+                sys.stdout.write(line.rstrip() + '\n')
+                sys.stdout.flush()
 
-    result = get_test_result(htrun_output)
+        # Check if process was terminated by signal
+        returncode = p.wait()
+
+        if returncode < 0:
+            return returncode
+
+        end_time = time()
+        result = get_test_result(htrun_output)
+
+        if result not in RETRY_ON_TEST_RESULT:
+            break
+
     result_test_cases = get_testcase_result(htrun_output)
     test_cases_summary = get_testcase_summary(htrun_output)
     get_coverage_data(build_path, htrun_output)
+    testcase_duration = end_time - start_time   # Test case duration from reset to {end}
 
     gt_logger.gt_log("mbed-host-test-runner: stopped and returned '%s'"% result, print_text=verbose)
     return (result, htrun_output, testcase_duration, duration, result_test_cases, test_cases_summary)
