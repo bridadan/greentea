@@ -217,6 +217,12 @@ def main():
                     help="Copy (flash the target) method selector. " + copy_methods_str,
                     metavar="COPY_METHOD")
 
+    parser.add_option('', '--test-tries',
+                    dest='test_tries',
+                    default=1,
+                    type=int,
+                    help='Maximum number of tries to run a test in case of an ERROR or TIMEOUT (Default 1)')
+
     parser.add_option('', '--parallel',
                     dest='parallel_test_exec',
                     default=1,
@@ -443,7 +449,8 @@ def run_test_thread(test_result_queue, test_queue, opts, mut, build, build_path,
                                          json_test_cfg=opts.json_test_configuration,
                                          enum_host_tests_path=enum_host_tests_path,
                                          global_resource_mgr=opts.global_resource_mgr,
-                                         verbose=verbose)
+                                         verbose=verbose,
+                                         tries=opts.test_tries)
 
         # Some error in htrun, abort test execution
         if isinstance(host_test_result, int):
@@ -681,7 +688,8 @@ def main_cli(opts, args, gt_instance_uuid=None):
                                          hooks=greentea_hooks,
                                          digest_source=opts.digest_source,
                                          enum_host_tests_path=enum_host_tests_path,
-                                         verbose=verbose)
+                                         verbose=verbose,
+                                         tries=opts.test_tries)
 
         # Some error in htrun, abort test execution
         if isinstance(host_test_result, int):
@@ -834,7 +842,8 @@ def main_cli(opts, args, gt_instance_uuid=None):
                                                  json_test_cfg=opts.json_test_configuration,
                                                  run_app=opts.run_app,
                                                  enum_host_tests_path=enum_host_tests_path,
-                                                 verbose=True)
+                                                 verbose=True,
+                                                 tries=opts.test_tries)
 
                 # Some error in htrun, abort test execution
                 if isinstance(host_test_result, int):

@@ -127,7 +127,7 @@ def run_host_test(image_path,
                   enum_host_tests_path=None,
                   global_resource_mgr=None,
                   run_app=None,
-                  tries=1):
+                  tries=3):
     """! This function runs host test supervisor (executes mbedhtrun) and checks output from host test process.
     @param image_path Path to binary file for flashing
     @param disk Currently mounted mbed-enabled devices disk (mount point)
