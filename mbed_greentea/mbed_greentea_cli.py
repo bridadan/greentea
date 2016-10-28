@@ -461,19 +461,20 @@ def run_test_thread(test_result_queue, test_queue, opts, mut, build, build_path,
         if single_test_result != TEST_RESULT_OK:
             test_exec_retcode += 1
 
-        if single_test_result in [TEST_RESULT_OK, TEST_RESULT_FAIL]:
-            if greentea_hooks:
-                # Test was successful
-                # We can execute test hook just after test is finished ('hook_test_end')
-                format = {
-                    "test_name": test['test_bin'],
-                    "test_bin_name": os.path.basename(test['image_path']),
-                    "image_path": test['image_path'],
-                    "build_path": build_path,
-                    "build_path_abs": build_path_abs,
-                    "build_name": build,
-                }
-                greentea_hooks.run_hook_ext('hook_test_end', format)
+        if greentea_hooks:
+            # Test was successful
+            # We can execute test hook just after test is finished ('hook_test_end')
+            format = {
+                "test_name": test['test_bin'],
+                "test_bin_name": os.path.basename(test['image_path']),
+                "image_path": test['image_path'],
+                "build_path": build_path,
+                "build_path_abs": build_path_abs,
+                "build_name": build,
+                "test_result": single_test_result,
+                "target_id": mut['target_id']
+            }
+            greentea_hooks.run_hook_ext('hook_test_end', format)
 
         # Update report for optional reporting feature
         test_suite_name = test['test_bin'].lower()
