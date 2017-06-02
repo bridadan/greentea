@@ -229,11 +229,21 @@ def run_host_test(image_path,
         # When we want to open file to scan for test results
         raise NotImplementedError
 
+    test_path_common, _ = os.path.split(image_path)
+    serial_output_file = os.path.join(test_path_common, 'serial_log.txt')
+
+    try:
+        if os.path.exists(serial_output_file):
+            os.remove(serial_output_file)
+    except OSError as e:
+        gt_logger.gt_log_err('Failed to remove existing serial output file')
+
     # Command executing CLI for host test supervisor (in detect-mode)
     cmd = ["mbedhtrun",
             '-m', micro,
             '-p', port,
             '-f', '"%s"'% image_path,
+            '--d-serial-output-file', serial_output_file,
             ]
 
     if enum_host_tests_path:
