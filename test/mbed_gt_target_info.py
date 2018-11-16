@@ -261,7 +261,7 @@ additional results from https://yotta-private.herokuapp.com:
         self.assertNotEqual('frdm-k64f-gcc', mbed_target_info.parse_mbed_target_from_target_json('K64F', target_json_data))
         self.assertNotEqual('frdm-k64f-gcc', mbed_target_info.parse_mbed_target_from_target_json('FRDM-K64F', target_json_data))
 
-    @patch('mbed_greentea.mbed_target_info.get_mbed_target_call_yotta_target')
+    @patch('mbed_tools.test.mbed_target_info.get_mbed_target_call_yotta_target')
     def test_get_mbed_target_from_current_dir_ok(self, callYtTarget_mock):
 
         yotta_target_cmd = """frdm-k64f-gcc 2.0.0
